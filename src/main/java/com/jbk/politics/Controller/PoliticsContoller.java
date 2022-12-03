@@ -2,6 +2,9 @@ package com.jbk.politics.Controller;
 
 import java.util.HashMap;
 
+import org.slf4j.ILoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +24,8 @@ import com.jbk.politics.Service.PoliticsServiceImpl;
 @RestController
 public class PoliticsContoller {
 
+	Logger logger = LoggerFactory.getLogger(PoliticsContoller.class);
+
 	@Autowired
 	private PoliticsServiceImpl service;
 
@@ -29,23 +34,26 @@ public class PoliticsContoller {
 	@GetMapping(value = "/forAdminloginOTPGeneration")
 	public ResponseEntity<HashMap<String, String>> forAdminLoginOTPGeneration(@RequestBody Admin admin) {
 		HashMap<String, String> forAdminLoginOTPGeneration = service.forAdminLoginOTPGeneration(admin);
-		if (forAdminLoginOTPGeneration != null) {
+		if (!forAdminLoginOTPGeneration.isEmpty()) {
+			logger.info("Admin Loginned OTP Generated");
 			return new ResponseEntity<HashMap<String, String>>(forAdminLoginOTPGeneration, HttpStatus.OK);
 		} else {
+			logger.error("Admin Login Failed");
 			throw new AdminDetailNotFoundException(
 					"Admin Details are Wrong please check once again :" + admin.getUsername());
 		}
-
 	}
 
 	@GetMapping(value = "/forAdminLoginEnterOTP/{OTP}")
 	public ResponseEntity<String> forAdminLoginEnterOTP(@PathVariable String OTP) {
 		String forAdminLoginEnterOTP = service.forAdminLoginEnterOTP(OTP);
 		if (forAdminLoginEnterOTP != null) {
-			boolean isLogined = true; //VERY VERY IMPORTANT
+			boolean isLogined = true; // VERY VERY IMPORTANT
 			this.isLogined = isLogined;
+			logger.info("OTP entered is correct");
 			return new ResponseEntity<String>(forAdminLoginEnterOTP, HttpStatus.OK);
 		} else {
+			logger.error("OTP entered is wrong");
 			throw new OTPWrongEnteredException("OTP entered is wrong please regenerate it ");
 		}
 	}
@@ -73,11 +81,14 @@ public class PoliticsContoller {
 		if (isLogined) {
 			savaPoliticianData = service.savaPoliticianData(politiciansDetails);
 			if (savaPoliticianData) {
+				logger.info("Politican Data Saved");
 				return new ResponseEntity<Boolean>(savaPoliticianData, HttpStatus.OK);
-				} else {
+			} else {
+				logger.error("Politician Data Saved Method Failed");
 				throw new PoliticiansDetailNotFoundException("Politician Already Exists");
 			}
 		} else {
+			logger.error("Admin Not Loginned and Method Called");
 			throw new AdminDetailNotFoundException("Admin must login first for saving the data");
 		}
 	}
